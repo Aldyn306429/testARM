@@ -39,6 +39,7 @@ public class Arm extends SubsystemBase {
     m_armEncoder = new DutyCycleEncoder(Constants.ArmConstants.ArmEncoderID);
     // new DutyCycleEncoder(Constants.ArmConstants.ArmEncoderID);
     m_armEncoder.setDutyCycleRange(1.0 / 1025.0, 1024.0 / 1025.0);
+    m_armEncoder.setPositionOffset(m_armEncoder.getAbsolutePosition() - Constants.ArmConstants.defaultInitializePosition);
 
     m_armFeedforward = new ArmFeedforward(
       Constants.ArmConstants.armkS, Constants.ArmConstants.armkG,
@@ -69,10 +70,11 @@ public class Arm extends SubsystemBase {
 
   @Override
   public void periodic() {
-    curAngle = m_armEncoder.getAbsolutePosition() * 360;
+    curAngle = m_armEncoder.getAbsolutePosition() - m_armEncoder.getPositionOffset();
 
     SmartDashboard.putNumber("Arm Goal Setpoint: ", goal);
-    SmartDashboard.putNumber("Arm Current Absolute Angle: ", curAngle);
+    SmartDashboard.putNumber("Arm Current Absolute Angle: ", rawEncoderToDegree(curAngle));
+    SmartDashboard.putNumber("Arm Current Absolute Position: ", m_armEncoder.getAbsolutePosition());
     SmartDashboard.putNumber("Arm Applied Output", m_arm.getAppliedOutput());
     SmartDashboard.putNumber("Arm Encoder Offset: ", m_armEncoder.getPositionOffset());
 
@@ -122,5 +124,13 @@ public class Arm extends SubsystemBase {
   public boolean passedLimits() {
     if(curAngle >= armTopLimit || curAngle <= armBotLimit) return true;
     else return false;
+  }
+
+  public double rawEncoderToDegree(double rawValue) {
+    return rawValue * 360.0;
+  }
+
+  public double degreeToRawEncoder(double angle) {
+    return angle / 360.0;
   }
 }
